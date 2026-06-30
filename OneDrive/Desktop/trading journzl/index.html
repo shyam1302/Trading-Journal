@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseJournal — Premium Neon Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+  <!-- CANDLESTICK DRIFT CANVAS & GLOW -->
+  <canvas id="bg-candlesticks"></canvas>
+  <div class="ambient-glow"></div>
+
+  <!-- TICKER MARQUEE STRIP -->
+  <div id="ticker-strip">
+    <div class="ticker-track" id="ticker-track">
+      <!-- Populated via JS -->
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="container header-content">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <i data-lucide="activity"></i>
+        </div>
+        <h1>Pulse<span>Journal</span></h1>
+        <div class="live-indicator">
+          <div class="pulse-dot"></div>
+          <span id="current-session-label">Live Session</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="theme-toggle" title="Toggle Light/Dark Theme">
+          <i data-lucide="sun" id="theme-icon-sun" style="display:none;"></i>
+          <i data-lucide="moon" id="theme-icon-moon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <div class="container tabs-wrapper">
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="dashboard">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </button>
+      <button class="tab-btn" data-tab="add-trade">
+        <i data-lucide="plus-circle"></i>
+        <span>Add Trade</span>
+      </button>
+      <button class="tab-btn" data-tab="trade-log">
+        <i data-lucide="list"></i>
+        <span>Trade Log</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN APP PANELS -->
+  <main class="container">
+
+    <!-- DASHBOARD VIEW -->
+    <section id="dashboard" class="tab-content active">
+      <!-- Metrics Grid -->
+      <div class="metrics-grid">
+        <!-- Total P&L Card -->
+        <div class="metric-card" id="metric-pnl">
+          <div class="metric-header">
+            <span class="metric-title">Total P&L</span>
+            <div class="metric-icon">
+              <i data-lucide="dollar-sign"></i>
+            </div>
+          </div>
+          <div class="metric-value" id="val-pnl">$0.00</div>
+          <div class="metric-footer" id="val-pnl-sub">Net profitability</div>
+        </div>
+
+        <!-- Total Trades Card -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Total Trades</span>
+            <div class="metric-icon">
+              <i data-lucide="bar-chart-2"></i>
+            </div>
+          </div>
+          <div class="metric-value" id="val-total-trades">0</div>
+          <div class="metric-footer">Trades logged</div>
+        </div>
+
+        <!-- Win Rate Card -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Win Rate</span>
+            <div class="metric-icon">
+              <i data-lucide="percent"></i>
+            </div>
+          </div>
+          <div class="metric-value" id="val-win-rate">0%</div>
+          <div class="metric-footer" id="val-win-rate-ratio">0 of 0 trades profitable</div>
+        </div>
+
+        <!-- Best Trade Card -->
+        <div class="metric-card profit">
+          <div class="metric-header">
+            <span class="metric-title">Best Trade</span>
+            <div class="metric-icon">
+              <i data-lucide="trending-up"></i>
+            </div>
+          </div>
+          <div class="metric-value text-profit" id="val-best-trade">$0.00</div>
+          <div class="metric-footer" id="val-best-symbol">No trades yet</div>
+        </div>
+
+        <!-- Worst Trade Card -->
+        <div class="metric-card loss">
+          <div class="metric-header">
+            <span class="metric-title">Worst Trade</span>
+            <div class="metric-icon">
+              <i data-lucide="trending-down"></i>
+            </div>
+          </div>
+          <div class="metric-value text-loss" id="val-worst-trade">$0.00</div>
+          <div class="metric-footer" id="val-worst-symbol">No trades yet</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-grid">
+        <!-- Cumulative P&L -->
+        <div class="card">
+          <h2 class="card-title">
+            <i data-lucide="activity"></i> Cumulative P&L Curve
+          </h2>
+          <div class="chart-container" id="pnl-chart-container">
+            <!-- Custom SVG line chart rendered here -->
+          </div>
+        </div>
+
+        <!-- Win Rate by Market -->
+        <div class="card">
+          <h2 class="card-title">
+            <i data-lucide="bar-chart-3"></i> Win Rate by Market
+          </h2>
+          <div class="chart-container" id="market-bars-container">
+            <!-- Custom HTML bars rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Performance Analysis & Calendar Grid -->
+      <div class="summary-calendar-grid">
+        <!-- Session Performance Analysis -->
+        <div class="card">
+          <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+            <span>Summary Session</span>
+            <i data-lucide="info" style="width: 16px; height: 16px; opacity: 0.6; cursor: help;"
+              title="Performance summary across different trading session windows"></i>
+          </h2>
+          <div class="table-responsive">
+            <table class="session-summary-table">
+              <thead>
+                <tr>
+                  <th>Session</th>
+                  <th style="text-align: right;">Net P&L</th>
+                  <th style="text-align: center; width: 140px;">Win Rate</th>
+                  <th style="text-align: right;">Total Profit</th>
+                  <th style="text-align: right;">Total Loss</th>
+                  <th style="text-align: right;">Total Trades</th>
+                </tr>
+              </thead>
+              <tbody id="session-summary-tbody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- P&L Calendar -->
+        <div class="card calendar-widget">
+          <div class="calendar-header">
+            <h2>
+              <i data-lucide="calendar-days"></i> P&L Calendar
+            </h2>
+            <div class="calendar-nav">
+              <button id="cal-prev" title="Previous Month">&#8249;</button>
+              <span class="calendar-month-label" id="cal-month-label">June 2026</span>
+              <button id="cal-next" title="Next Month">&#8250;</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid">
+            <!-- Rendered via JS -->
+          </div>
+          <div class="calendar-legend">
+            <div class="calendar-legend-item">
+              <div class="calendar-legend-swatch"
+                style="background: rgba(200, 255, 63, 0.25); border: 1px solid rgba(200, 255, 63, 0.4);"></div>
+              Profit Day
+            </div>
+            <div class="calendar-legend-item">
+              <div class="calendar-legend-swatch"
+                style="background: rgba(255, 77, 109, 0.25); border: 1px solid rgba(255, 77, 109, 0.4);"></div>
+              Loss Day
+            </div>
+            <div class="calendar-legend-item">
+              <div class="calendar-legend-swatch"
+                style="background: rgba(200, 255, 63, 0.25); border: 2px solid var(--color-lime);"></div>
+              Best Day
+            </div>
+            <div class="calendar-legend-item">
+              <div class="calendar-legend-swatch"
+                style="background: rgba(255, 77, 109, 0.25); border: 2px solid var(--color-coral);"></div>
+              Worst Day
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADD TRADE VIEW -->
+    <section id="add-trade" class="tab-content">
+      <div class="card">
+        <h2 class="card-title" id="form-card-title">
+          <i data-lucide="plus-circle"></i> Log a New Trade
+        </h2>
+        <form id="trade-form">
+          <div class="form-grid">
+            <!-- Entry Date -->
+            <div class="form-group">
+              <label for="trade-date">Entry Date</label>
+              <input type="date" id="trade-date" required>
+            </div>
+
+            <!-- Entry Time -->
+            <div class="form-group">
+              <label for="trade-time">Entry Time</label>
+              <input type="time" id="trade-time" required>
+            </div>
+
+            <!-- Market -->
+            <div class="form-group">
+              <label for="trade-market">Market</label>
+              <select id="trade-market" required>
+                <option value="Stocks">Stocks</option>
+                <option value="Forex">Forex</option>
+                <option value="Crypto">Crypto</option>
+              </select>
+            </div>
+
+            <!-- Exit Date -->
+            <div class="form-group">
+              <label for="trade-exit-date">Exit Date</label>
+              <input type="date" id="trade-exit-date" required>
+            </div>
+
+            <!-- Exit Time -->
+            <div class="form-group">
+              <label for="trade-exit-time">Exit Time</label>
+              <input type="time" id="trade-exit-time" required>
+            </div>
+
+            <!-- Symbol -->
+            <div class="form-group">
+              <label for="trade-symbol">Symbol</label>
+              <input type="text" id="trade-symbol" placeholder="e.g. AAPL, EURUSD, BTC" required>
+            </div>
+
+            <!-- Direction -->
+            <div class="form-group">
+              <label for="trade-direction">Direction</label>
+              <select id="trade-direction" required>
+                <option value="Long">Long (Buy)</option>
+                <option value="Short">Short (Sell)</option>
+              </select>
+            </div>
+
+            <!-- Entry Price -->
+            <div class="form-group">
+              <label for="trade-entry">Entry Price</label>
+              <input type="number" id="trade-entry" step="any" placeholder="0.00" required min="0.00000001">
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label for="trade-qty">Quantity / Lots / Size</label>
+              <input type="number" id="trade-qty" step="any" placeholder="10" required min="0.00000001">
+            </div>
+
+            <!-- Stop Loss -->
+            <div class="form-group">
+              <label for="trade-sl">Stop Loss (SL)</label>
+              <input type="number" id="trade-sl" step="any" placeholder="Optional">
+            </div>
+
+            <!-- Take Profit -->
+            <div class="form-group">
+              <label for="trade-tp">Take Profit (TP)</label>
+              <input type="number" id="trade-tp" step="any" placeholder="Optional">
+            </div>
+
+            <!-- Trailing SL -->
+            <div class="form-group">
+              <label for="trade-tsl">Trailing Stop Loss (TSL)</label>
+              <input type="number" id="trade-tsl" step="any" placeholder="Optional">
+            </div>
+
+            <!-- Exit Trigger -->
+            <div class="form-group">
+              <label for="trade-exit-trigger">Exit Trigger / Outcome</label>
+              <select id="trade-exit-trigger">
+                <option value="Manual">Manual Exit / None</option>
+                <option value="TP">Take Profit (TP) Hit</option>
+                <option value="SL">Stop Loss (SL) Hit</option>
+                <option value="TSL">Trailing SL Hit</option>
+              </select>
+            </div>
+
+            <!-- Trading Session (auto-detected from entry time) -->
+            <div class="form-group">
+              <label for="trade-session">Trading Session <span
+                  style="font-weight: 400; font-size: 11px; color: var(--text-muted);">(auto)</span></label>
+              <select id="trade-session">
+                <option value="">Detecting...</option>
+                <option value="Asian">Asian Session</option>
+                <option value="London">London Session</option>
+                <option value="London/NY">London / NY Overlap</option>
+                <option value="New York">New York Session</option>
+              </select>
+            </div>
+
+            <!-- Strategy -->
+            <div class="form-group">
+              <label for="trade-strategy">Strategy / Playbook</label>
+              <input type="text" id="trade-strategy" placeholder="e.g. Trend Line Breakout, VWAP bounce"
+                style="width: 100%;">
+            </div>
+
+            <!-- Screenshot Upload Zone -->
+            <div class="form-group full-width">
+              <label>Attach Screenshots / Charts (Optional)</label>
+              <div class="upload-zone" id="upload-zone">
+                <i data-lucide="image" style="width: 20px; height: 20px; color: var(--text-muted);"></i>
+                <p>Click, drag, or Ctrl+V to paste charts</p>
+                <input type="file" id="trade-screenshot" accept="image/*" style="display: none;" multiple>
+              </div>
+              <div class="preview-grid" id="upload-preview-grid" style="display: none;">
+                <!-- Previews rendered via JS -->
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group full-width">
+              <label for="trade-notes">Trade Review & Notes</label>
+              <textarea id="trade-notes"
+                placeholder="Why did you take this trade? What went well? How was your execution?"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btn-reset-form">Clear Fields</button>
+            <div class="btn-submit-container">
+              <button type="submit" class="btn" id="btn-submit-trade">
+                <i data-lucide="save"></i> <span>Save Trade</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TRADE LOG VIEW -->
+    <section id="trade-log" class="tab-content">
+      <div class="card">
+        <div class="filter-bar">
+          <div class="filters-left">
+            <div class="form-group filter-select">
+              <label for="filter-market">Market Filter</label>
+              <select id="filter-market">
+                <option value="All">All Markets</option>
+                <option value="Stocks">Stocks</option>
+                <option value="Forex">Forex</option>
+                <option value="Crypto">Crypto</option>
+              </select>
+            </div>
+            <div class="form-group filter-select">
+              <label for="filter-direction">Direction Filter</label>
+              <select id="filter-direction">
+                <option value="All">All Directions</option>
+                <option value="Long">Long</option>
+                <option value="Short">Short</option>
+              </select>
+            </div>
+            <div class="form-group filter-select">
+              <label for="filter-session">Session Filter</label>
+              <select id="filter-session">
+                <option value="All">All Sessions</option>
+                <option value="Asian">Asian</option>
+                <option value="London">London</option>
+                <option value="London/NY">London / NY</option>
+                <option value="New York">New York</option>
+              </select>
+            </div>
+          </div>
+          <div class="filters-right">
+            <button class="btn btn-secondary" id="btn-clear-all"
+              style="color: var(--color-coral); border-color: rgba(255, 77, 109, 0.2);"
+              title="Reset journal to blank slate">
+              <i data-lucide="trash-2"></i> Clear Journal
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table id="trades-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Symbol</th>
+                <th>Market</th>
+                <th>Direction</th>
+                <th>Entry</th>
+                <th>Exit</th>
+                <th>Quantity</th>
+                <th>P&L</th>
+                <th style="text-align: center;">Chart</th>
+                <th>Session</th>
+                <th>Strategy</th>
+                <th style="width: 110px; text-align: center;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="trades-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST ALERTS CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- IMAGE LIGHTBOX MODAL -->
+  <div id="image-modal" class="modal">
+    <span class="lightbox-counter" id="lightbox-counter"></span>
+    <span class="modal-close">&times;</span>
+    <div class="modal-content-wrapper">
+      <button class="lightbox-nav lightbox-prev" id="lightbox-prev" title="Previous Image">&lt;</button>
+      <img class="modal-content" id="modal-img" alt="Chart Screenshot">
+      <button class="lightbox-nav lightbox-next" id="lightbox-next" title="Next Image">&gt;</button>
+      <div id="modal-caption"></div>
+      <div class="lightbox-thumbnails" id="lightbox-thumbnails"></div>
+    </div>
+  </div>
+
+  <!-- NOTES DETAILS MODAL -->
+  <div id="notes-modal" class="modal">
+    <span class="modal-close" id="notes-modal-close">&times;</span>
+    <div class="modal-content-wrapper"
+      style="background: var(--bg-card-start); padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); max-width: 600px; width: 90%;">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3
+          style="font-size: 20px; font-weight: 800; color: var(--text-title); display: flex; align-items: center; gap: 10px; margin-bottom: 0; font-family: var(--font-display);">
+          <i data-lucide="file-text" style="color: var(--color-violet); width: 24px; height: 24px;"></i>
+          <span>Trade Review & Notes</span>
+        </h3>
+        <button id="btn-edit-modal-notes" class="btn-edit" title="Edit Notes" style="margin-right: 0;">
+          <i data-lucide="edit-3" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+      <div id="notes-modal-meta"
+        style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; display: flex; gap: 16px; flex-wrap: wrap;">
+        <!-- Populated via JS -->
+      </div>
+
+      <!-- View Mode Body -->
+      <div id="notes-modal-body"
+        style="font-size: 14px; color: var(--text-body); line-height: 1.6; white-space: pre-wrap; max-height: 50vh; overflow-y: auto; text-align: left; padding-right: 8px;">
+        <!-- Populated via JS -->
+      </div>
+
+      <!-- Edit Mode Body -->
+      <div id="notes-modal-edit-container" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+        <textarea id="notes-modal-textarea"
+          style="width: 100%; min-height: 150px; font-size: 14px; line-height: 1.6; color: var(--text-title); background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px;"
+          placeholder="Why did you take this trade? What went well? How was your execution?"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-modal-notes"
+            style="padding: 8px 16px; font-size: 13px;">Cancel</button>
+          <button type="button" class="btn" id="btn-save-modal-notes" style="padding: 8px 16px; font-size: 13px;">
+            <i data-lucide="save" style="width:14px;height:14px;"></i> Save Notes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY TRADES MODAL -->
+  <div id="day-trades-modal" class="modal">
+    <span class="modal-close" id="day-trades-modal-close">&times;</span>
+    <div class="modal-content-wrapper"
+      style="background: var(--bg-card-start); padding: 28px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); max-width: 680px; width: 92%;">
+      <h3 id="day-trades-modal-title"
+        style="font-size: 20px; font-weight: 800; color: var(--text-title); display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-family: var(--font-display);">
+        <i data-lucide="calendar-days" style="color: var(--color-violet); width: 22px; height: 22px;"></i>
+        <span>Trades on June 24, 2026</span>
+      </h3>
+      <div id="day-trades-summary"
+        style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-muted);">
+      </div>
+      <div id="day-trades-list"
+        style="display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; padding-right: 4px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 PulseJournal. Built with clean code, modern details, and offline persistence.</p>
+    </div>
+  </footer>
+
+  <script src="index.js" defer></script>
+</body>
+
+</html>
