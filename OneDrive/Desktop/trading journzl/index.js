@@ -1893,6 +1893,77 @@
       lucide.createIcons();
     };
 
+    function initBackupAndRestore() {
+      const btnExport = document.getElementById("btn-export-data");
+      const btnImport = document.getElementById("btn-import-data");
+      const importInput = document.getElementById("import-data-file");
+
+      if (btnExport) {
+        btnExport.addEventListener("click", () => {
+          if (trades.length === 0) {
+            showToast("No trades found to export.", "error");
+            return;
+          }
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trades, null, 2));
+          const downloadAnchor = document.createElement('a');
+          downloadAnchor.setAttribute("href", dataStr);
+          downloadAnchor.setAttribute("download", "trading_journal_backup.json");
+          document.body.appendChild(downloadAnchor);
+          downloadAnchor.click();
+          downloadAnchor.remove();
+          showToast("Trades exported successfully!", "success");
+        });
+      }
+
+      if (btnImport && importInput) {
+        btnImport.addEventListener("click", () => {
+          importInput.click();
+        });
+
+        importInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            try {
+              const imported = JSON.parse(evt.target.result);
+              if (Array.isArray(imported)) {
+                const isValid = imported.every(t => t.id && t.symbol && t.market && t.direction && typeof t.pnl === 'number');
+                if (isValid) {
+                  if (confirm(`Are you sure you want to import ${imported.length} trades? This will merge with your current journal.`)) {
+                    const existingIds = new Set(trades.map(t => t.id));
+                    let addedCount = 0;
+                    imported.forEach(t => {
+                      if (!existingIds.has(t.id)) {
+                        trades.push(t);
+                        addedCount++;
+                      }
+                    });
+
+                    saveTradesToStorage();
+                    updateMetrics();
+                    renderCharts();
+                    renderTable();
+
+                    showToast(`Successfully imported ${addedCount} new trades!`, "success");
+                    importInput.value = "";
+                  }
+                } else {
+                  showToast("Invalid backup file: trade schema mismatch.", "error");
+                }
+              } else {
+                showToast("Invalid backup file: root must be an array.", "error");
+              }
+            } catch (err) {
+              showToast("Failed to parse backup file: invalid JSON.", "error");
+            }
+          };
+          reader.readAsText(file);
+        });
+      }
+    }
+
     function initScreenshotHandlers() {
       const uploadZone = document.getElementById("upload-zone");
       const fileInput = document.getElementById("trade-screenshot");
@@ -2066,6 +2137,7 @@
       initForm();
       initFilters();
       initScreenshotHandlers();
+      initBackupAndRestore();
       initCalendar();
 
       // Premium visual initializers

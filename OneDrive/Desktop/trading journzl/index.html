@@ -45,7 +45,14 @@
           <span id="current-session-label">Live Session</span>
         </div>
       </div>
-      <div class="header-actions">
+      <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn btn-secondary" id="btn-export-data" style="padding: 8px 16px; font-size: 13px; display: flex; align-items: center; gap: 6px;" title="Backup trades to a file">
+          <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export
+        </button>
+        <button class="btn btn-secondary" id="btn-import-data" style="padding: 8px 16px; font-size: 13px; display: flex; align-items: center; gap: 6px;" title="Import backup file">
+          <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Import
+        </button>
+        <input type="file" id="import-data-file" accept=".json" style="display: none;">
         <button class="btn-icon" id="theme-toggle" title="Toggle Light/Dark Theme">
           <i data-lucide="sun" id="theme-icon-sun" style="display:none;"></i>
           <i data-lucide="moon" id="theme-icon-moon"></i>
