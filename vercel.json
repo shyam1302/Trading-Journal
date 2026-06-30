@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/OneDrive/Desktop/trading journzl/$1"
+    }
+  ]
+}
